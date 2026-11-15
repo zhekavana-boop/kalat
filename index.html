@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Квіз: Моя Україна 🇺🇦 (Emoji Edition)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: #020617;
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(37, 99, 235, 0.3) 0px, transparent 50%),
+                radial-gradient(at 90% 10%, rgba(202, 138, 4, 0.25) 0px, transparent 50%),
+                radial-gradient(at 80% 90%, rgba(147, 51, 234, 0.25) 0px, transparent 50%),
+                radial-gradient(at 10% 90%, rgba(16, 185, 129, 0.2) 0px, transparent 50%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            color: #ffffff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 0;
+            pointer-events: none;
+            will-change: opacity;
+            animation: gridPulse 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes gridPulse {
+            0% { opacity: 0.45; }
+            100% { opacity: 0.9; }
+        }
+
+        .glow-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(110px);
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.65;
+            will-change: transform;
+            animation: floatOrb 12s ease-in-out infinite alternate;
+        }
+
+        .orb-1 { width: 460px; height: 460px; background: #2563eb; top: -120px; left: -120px; }
+        .orb-2 { width: 500px; height: 500px; background: #eab308; bottom: -150px; right: -120px; animation-delay: -4s; }
+        .orb-3 { width: 380px; height: 380px; background: #9333ea; top: 40%; left: 45%; animation-delay: -8s; }
+
+        @keyframes floatOrb {
+            0% { transform: translate3d(0, 0, 0) scale(1); }
+            100% { transform: translate3d(40px, -30px, 0) scale(1.1); }
+        }
+
+        .app-container {
+            position: relative;
+            z-index: 1;
+            background: rgba(15, 23, 42, 0.86);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 36px;
+            box-shadow: 
+                0 35px 70px -15px rgba(0, 0, 0, 0.9),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                0 0 40px rgba(37, 99, 235, 0.15);
+            width: 100%;
+            max-width: 760px;
+            padding: 36px;
+            max-height: 92vh;
+            overflow-y: auto;
+        }
+
+        .app-container::-webkit-scrollbar { width: 8px; }
+        .app-container::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+
+        .screen {
+            text-align: center;
+            animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 16px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 12px 22px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #question-tracker { color: #94a3b8; }
+        #timer { color: #f59e0b; font-size: 18px; font-weight: 800; text-shadow: 0 0 10px rgba(245, 158, 11, 0.4); transition: color 0.2s; }
+        #timer.danger { color: #ef4444; text-shadow: 0 0 12px rgba(239, 68, 68, 0.6); }
+        #score-tracker { color: #38bdf8; text-shadow: 0 0 10px rgba(56, 189, 248, 0.4); }
+        #streak-tracker { color: #f97316; font-weight: 800; display: none; text-shadow: 0 0 10px rgba(249, 115, 22, 0.5); }
+
+        .timer-bar-container {
+            width: 100%;
+            height: 7px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        #timer-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #3b82f6, #eab308, #ef4444);
+            transform-origin: left;
+            will-change: transform;
+        }
+
+        .question-sticker-container {
+            width: 100%;
+            height: 130px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.03);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 72px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.4);
+            will-change: transform;
+            animation: bounceSticker 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes bounceSticker {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-5px) scale(1.04); }
+        }
+
+        #question-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 24px;
+            line-height: 1.4;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #answers-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .answer-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.04);
+            color: #f1f5f9;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .answer-btn:hover {
+            background: rgba(59, 130, 246, 0.25);
+            border-color: #3b82f6;
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .answer-sticker-thumb {
+            font-size: 40px;
+            margin-bottom: 6px;
+            pointer-events: none;
+            transition: transform 0.2s ease;
+        }
+
+        .answer-btn:hover .answer-sticker-thumb {
+            transform: scale(1.18) rotate(6deg);
+        }
+
+        .answer-text-label {
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.2;
+            pointer-events: none;
+        }
+
+        .answer-btn.correct {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            border-color: #34d399 !important;
+            color: white !important;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6) !important;
+        }
+
+        .answer-btn.wrong {
+            background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+            border-color: #f87171 !important;
+            color: white !important;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.6) !important;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 22px;
+            border-radius: 22px;
+            border: none;
+            background: linear-gradient(135deg, #2563eb, #ca8a04);
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 15px;
+            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.45);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 38px rgba(202, 138, 4, 0.6);
+        }
+
+        .next-lvl-btn {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.45) !important;
+        }
+
+        .start-title {
+            font-size: 38px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(to right, #60a5fa, #facc15, #f87171);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .start-desc {
+            color: #94a3b8;
+            font-size: 18px;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .grade-badge {
+            display: inline-block;
+            font-size: 42px;
+            font-weight: 900;
+            color: #facc15;
+            background: rgba(250, 204, 21, 0.15);
+            padding: 12px 32px;
+            border-radius: 24px;
+            border: 2px solid rgba(250, 204, 21, 0.35);
+            margin: 12px 0;
+            text-shadow: 0 0 20px rgba(250, 204, 21, 0.6);
+        }
+
+        .result-details { font-size: 19px; color: #cbd5e1; margin-bottom: 6px; }
+        .result-comment { font-size: 19px; font-weight: 700; margin-top: 8px; margin-bottom: 20px; }
+
+        .review-container {
+            text-align: left;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .review-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            color: #facc15;
+            text-align: center;
+        }
+
+        .review-item {
+            font-size: 15px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 4px solid #ef4444;
+        }
+
+        .review-item.correct-item { border-left-color: #10b981; }
+        .review-question { font-weight: 600; color: #f8fafc; margin-bottom: 4px; }
+        .review-answer { color: #94a3b8; font-size: 14px; }
+        .review-explanation { color: #38bdf8; font-size: 13px; margin-top: 4px; font-style: italic; }
+
+        .buttons-group { display: flex; flex-direction: column; gap: 12px; }
+
+        @media (max-width: 540px) {
+            .app-container { padding: 24px 18px; }
+            #answers-container { grid-template-columns: 1fr; }
+            .header-info { font-size: 13px; padding: 10px 14px; }
+            #question-text { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-grid"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+
+    <div class="app-container">
+        <!-- Стартовий екран -->
+        <div id="start-screen" class="screen">
+            <h1 class="start-title">Квіз: Моя Україна 🇺🇦</h1>
+            <p class="start-desc">Перевір свої знання зі стікерами, аудіоефектами та двома рівнями складності!<br>На кожне запитання дається <b id="time-info">15 секунд</b>.</p>
+            <button id="start-btn" class="action-btn">Розпочати квіз ▶</button>
+        </div>
+
+        <!-- Екран квізу -->
+        <div id="quiz-screen" class="screen" style="display: none;">
+            <div class="header-info">
+                <span id="question-tracker">Запитання 1 / 12</span>
+                <span id="streak-tracker">🔥 Комбо: x0</span>
+                <span id="timer">⏱ 15</span>
+                <span id="score-tracker">Очки: 0</span>
+            </div>
+
+            <div class="timer-bar-container">
+                <div id="timer-bar"></div>
+            </div>
+
+            <div class="question-sticker-container" id="question-sticker">🏛️</div>
+
+            <h2 id="question-text">Запитання 1</h2>
+
+            <div id="answers-container"></div>
+        </div>
+
+        <!-- Екран результатів -->
+        <div id="result-screen" class="screen" style="display: none;">
+            <h2 style="font-size: 32px; color: #4ade80; margin-bottom: 6px;">Квіз пройдено! 🎉</h2>
+            <p class="result-details" id="final-answers"></p>
+            <div class="grade-badge" id="final-grade">Оцінка: 12 / 12</div>
+            <p class="result-comment" id="result-comment">Чудовий результат!</p>
+            
+            <div class="review-container">
+                <div class="review-title">📖 Розбір запитань та довідка</div>
+                <div id="review-list"></div>
+            </div>
+
+            <div class="buttons-group">
+                <button id="next-level-btn" class="action-btn next-lvl-btn" style="display: none;">Наступний рівень 🚀</button>
+                <button id="restart-btn" class="action-btn">Пройти знову 🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const QUESTION_TIME = 15; // Єдина константа часу на відповідь (в секундах)
+
+        // Оптимізований Web Audio API синтезатор
+        const SoundFX = (() => {
+            let ctx = null;
+            const tones = {
+                click: { type: 'sine', freqs: [400], dur: 0.08, vol: 0.05 },
+                correct: { type: 'triangle', freqs: [523.25, 659.25, 783.99], dur: 0.4, vol: 0.08 },
+                wrong: { type: 'sawtooth', freqs: [150, 100], dur: 0.3, vol: 0.1 },
+                tick: { type: 'sine', freqs: [800], dur: 0.05, vol: 0.03 }
+            };
+
+            return {
+                init() {
+                    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (ctx.state === 'suspended') ctx.resume();
+                },
+                play(name) {
+                    if (!ctx || !tones[name]) return;
+                    try {
+                        const { type, freqs, dur, vol } = tones[name];
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        const now = ctx.currentTime;
+
+                        osc.type = type;
+                        freqs.forEach((f, idx) => osc.frequency.setValueAtTime(f, now + idx * 0.1));
+
+                        gain.gain.setValueAtTime(vol, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now);
+                        osc.stop(now + dur);
+                    } catch (e) {}
+                }
+            };
+        })();
+
+        const QUIZ_DATA = {
+            lvl1: [
+                { question: "Яка столиця України?", answers: [{ text: "Львів", sticker: "🏰" }, { text: "Харків", sticker: "🏙️" }, { text: "Київ", sticker: "👑" }, { text: "Одеса", sticker: "⚓" }], correct: 2, sticker: "🏛️", explanation: "Київ — столиця України з понад 1500-річною історією." },
+                { question: "Які кольори має державний прапор України?", answers: [{ text: "Синьо-жовті", sticker: "🟦🟨" }, { text: "Червоно-чорні", sticker: "🟥⬛" }, { text: "Синьо-білі", sticker: "🟦⬜" }, { text: "Жовто-зелені", sticker: "🟨🟩" }], correct: 0, sticker: "🇺🇦", explanation: "Синій символізує мирне небо, а жовтий — пшеничні поля." },
+                { question: "Яка найбільша річка в Україні?", answers: [{ text: "Дунай", sticker: "🚢" }, { text: "Південний Буг", sticker: "🏞️" }, { text: "Дніпро", sticker: "🌊" }, { text: "Дністер", sticker: "🛶" }], correct: 2, sticker: "💧", explanation: "Дніпро — головна водна артерія України та третя за довжиною річка Європи." },
+                { question: "Яке місто вважається культурною столицею західної України?", answers: [{ text: "Ужгород", sticker: "🌸" }, { text: "Львів", sticker: "☕" }, { text: "Івано-Франківськ", sticker: "🌲" }, { text: "Чернівці", sticker: "🏛️" }], correct: 1, sticker: "🦁", explanation: "Львів славиться своєю архітектурою, затишними кав'ярнями та атмосферними вуличками." },
+                { question: "Яка національна валюта України?", answers: [{ text: "Долар", sticker: "💵" }, { text: "Євро", sticker: "💶" }, { text: "Гривня", sticker: "₴" }, { text: "Злотий", sticker: "🪙" }], correct: 2, sticker: "💰", explanation: "Гривня була введена в обіг у вересні 1996 року під час грошової реформи." },
+                { question: "Яка гора є найвищою в Українських Карпатах?", answers: [{ text: "Говерла", sticker: "🏔️" }, { text: "Піп Іван", sticker: "🛖" }, { text: "Петрос", sticker: "⛰️" }, { text: "Брескул", sticker: "🏞️" }], correct: 0, sticker: "🥾", explanation: "Висота Говерли становить 2061 метр над рівнем моря." },
+                { question: "Яка традиційна українська страва готується з буряком та капустою?", answers: [{ text: "Вареники", sticker: "🥟" }, { text: "Борщ", sticker: "🥣" }, { text: "Котлета по-київськи", sticker: "🍗" }, { text: "Галушки", sticker: "🍲" }], correct: 1, sticker: "🍲", explanation: "Культура приготування українського борщу внесена до спадщини ЮНЕСКО." },
+                { question: "Який символ зображений на малому гербі України?", answers: [{ text: "Лев", sticker: "🦁" }, { text: "Козак", sticker: "⚔️" }, { text: "Тризуб", sticker: "🔱" }, { text: "Калина", sticker: "🍒" }], correct: 2, sticker: "🛡️", explanation: "Тризуб має тисячолітню історію та був родовим знаком князів Рюриковичів." },
+                { question: "Яке море омиває південні береги України?", answers: [{ text: "Балтійське", sticker: "🧊" }, { text: "Чорне", sticker: "🌊" }, { text: "Каспійське", sticker: "🗺️" }, { text: "Середземне", sticker: "🌴" }], correct: 1, sticker: "🌅", explanation: "Південні береги України омиваються Чорним та Азовським морями." },
+                { question: "Хто є автором слів гімну України «Ще не вмерла України...»?", answers: [{ text: "Тарас Шевченко", sticker: "📜" }, { text: "Іван Франко", sticker: "🖊️" }, { text: "Леся Українка", sticker: "📖" }, { text: "Павло Чубинський", sticker: "✍️" }], correct: 3, sticker: "🎶", explanation: "Вірш Павла Чубинського був написаний у 1862 році, а музику створив Михайло Вербицький." },
+                { question: "Який народний музичний інструмент є символом українського козацтва?", answers: [{ text: "Скрипка", sticker: "🎻" }, { text: "Бандура", sticker: "🪕" }, { text: "Цимбали", sticker: "🎹" }, { text: "Трембіта", sticker: "🎺" }], correct: 1, sticker: "🎵", explanation: "Кобзарі та бандуристи супроводжували козацькі походи і співали про подвиги героїв." },
+                { question: "Яка рослина разом із вербою вважається народним символом України?", answers: [{ text: "Дуб", sticker: "🌳" }, { text: "Калина", sticker: "🍒" }, { text: "Соняшник", sticker: "🌻" }, { text: "Барвінок", sticker: "🌿" }], correct: 1, sticker: "🌺", explanation: "«Без верби і калини нема України» — одне з найвідоміших народних прислів'їв." }
+            ],
+            lvl2: [
+                { question: "Як називається найглибша станція метро у світі, яка розташована в Києві?", answers: [{ text: "Вокзальна", sticker: "🚉" }, { text: "Арсенальна", sticker: "🚇" }, { text: "Хрещатик", sticker: "🌆" }, { text: "Театральна", sticker: "🎭" }], correct: 1, sticker: "🚇", explanation: "Станція «Арсенальна» залягає на глибині 105.5 метрів під землею." },
+                { question: "Як називається найдовший у світі духовий музичний інструмент родом з Карпат?", answers: [{ text: "Сопілка", sticker: "🪈" }, { text: "Трембіта", sticker: "🎺" }, { text: "Бандура", sticker: "🪕" }, { text: "Дримба", sticker: "🎵" }], correct: 1, sticker: "📯", explanation: "Довжина гуцульської трембіти може сягати 4 метрів, а звук чутно на 10 кілометрів!" },
+                { question: "Яку назву має найбільша пустеля в Європі, розташована на півдні України?", answers: [{ text: "Олешківські піски", sticker: "🏜️" }, { text: "Таврійські степи", sticker: "🌾" }, { text: "Кінбурнська коса", sticker: "🏝️" }, { text: "Асканійські бархани", sticker: "🐪" }], correct: 0, sticker: "🌵", explanation: "Олешківські піски на Херсонщині — величезний піщаний масив із власними барханами." },
+                { question: "Яке місто України неофіційно називають «містом ста левів»?", answers: [{ text: "Київ", sticker: "🏰" }, { text: "Львів", sticker: "🦁" }, { text: "Чернігів", sticker: "⛪" }, { text: "Житомир", sticker: "🌳" }], correct: 1, sticker: "👑", explanation: "Скульптури, барельєфи та зображення левів прикрашають понад 450 місць у Львові." },
+                { question: "Який літак українського виробництва став найважчим вантажним літаком у світі?", answers: [{ text: "АН-124 «Руслан»", sticker: "🛫" }, { text: "АН-225 «Мрія»", sticker: "✈️" }, { text: "АН-74", sticker: "🛩️" }, { text: "АН-140", sticker: "🚁" }], correct: 1, sticker: "🚀", explanation: "АН-225 «Мрія» встановив понад 240 світових рекордів за вантажопідйомністю." },
+                { question: "У якому місті знаходиться єдина у світі підземна гіпсова печера Оптимістична?", answers: [{ text: "Біля Тернополя", sticker: "🦇" }, { text: "Біля Житомира", sticker: "🌲" }, { text: "Під Одесою", sticker: "🌊" }, { text: "В Карпатах", sticker: "🏔️" }], correct: 0, sticker: "🕳️", explanation: "Печера Оптимістична на Тернопільщині — найдовша гіпсова печера у світі (понад 260 км)." },
+                { question: "Як називається унікальний романтичний зелений тунель з дерев на Рівненщині?", answers: [{ text: "Тунель Закоханих", sticker: "💚" }, { text: "Казковий ліс", sticker: "🌲" }, { text: "Зелена алея", sticker: "🍃" }, { text: "Парк Мрій", sticker: "✨" }], correct: 0, sticker: "🚂", explanation: "Тунель кохання у селищі Клевань є популярним об'єктом для туристів зі всього світу." },
+                { question: "Який географічний центр згідно з вимірюваннями 1887 року розташований на Закарпатті?", answers: [{ text: "Центр Європи", sticker: "🌍" }, { text: "Центр Євразії", sticker: "🌏" }, { text: "Центр Карпат", sticker: "🏔️" }, { text: "Центр Древньої Русі", sticker: "📜" }], correct: 0, sticker: "📍", explanation: "Поблизу містечка Рахів на Закарпатті встановлено геодезичний знак центру Європи." },
+                { question: "Скільки областей входить до складу України?", answers: [{ text: "22", sticker: "🔢" }, { text: "24", sticker: "🗺️" }, { text: "25", sticker: "📍" }, { text: "27", sticker: "🏢" }], correct: 1, sticker: "🧩", explanation: "Адміністративний устрій України включає 24 області, АР Крим та 2 міста зі спецстатусом." },
+                { question: "Який відомий український композитор написав всесвітньо відому мелодію «Щедрик»?", answers: [{ text: "Микола Лисенко", sticker: "🎼" }, { text: "Микола Леонтович", sticker: "🔔" }, { text: "Михайло Вербицький", sticker: "🎻" }, { text: "Мирослав Скорик", sticker: "🎹" }], correct: 1, sticker: "❄️", explanation: "«Щедрик» Миколи Леонтовича відомий у всьому світі під назвою «Carol of the Bells»." },
+                { question: "Який біосферний заповідник на півдні України збереже незайманий цілинний степ?", answers: [{ text: "Асканія-Нова", sticker: "🦓" }, { text: "Подільські Товтри", sticker: "🏞️" }, { text: "Горгани", sticker: "🌲" }, { text: "Шацькі озера", sticker: "🌊" }], correct: 0, sticker: "🦬", explanation: "Асканія-Нова — найстаріший степовий заповідник світу, заснований у XIX столітті." },
+                { question: "Як називається найбільша фортеця України, розташована над Дністром у Чернівецькій області?", answers: [{ text: "Кам'янецька", sticker: "🏰" }, { text: "Хотинська", sticker: "🛡️" }, { text: "Аккерманська", sticker: "⚓" }, { text: "Олеська", sticker: "⚔️" }], correct: 1, sticker: "🏰", explanation: "Хотинська фортеця відома своїми величними 40-метровими стінами та багатою історією." }
+            ]
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const dom = {
+                startScreen: document.getElementById('start-screen'),
+                quizScreen: document.getElementById('quiz-screen'),
+                resultScreen: document.getElementById('result-screen'),
+                timeInfo: document.getElementById('time-info'),
+                questionText: document.getElementById('question-text'),
+                questionSticker: document.getElementById('question-sticker'),
+                answersContainer: document.getElementById('answers-container'),
+                questionTracker: document.getElementById('question-tracker'),
+                scoreTracker: document.getElementById('score-tracker'),
+                streakTracker: document.getElementById('streak-tracker'),
+                timer: document.getElementById('timer'),
+                timerBar: document.getElementById('timer-bar'),
+                finalAnswers: document.getElementById('final-answers'),
+                finalGrade: document.getElementById('final-grade'),
+                resultComment: document.getElementById('result-comment'),
+                reviewList: document.getElementById('review-list'),
+                startBtn: document.getElementById('start-btn'),
+                restartBtn: document.getElementById('restart-btn'),
+                nextLevelBtn: document.getElementById('next-level-btn')
+            };
+
+            dom.timeInfo.textContent = `${QUESTION_TIME} секунд`;
+            dom.timer.textContent = `⏱ ${QUESTION_TIME}`;
+
+            let state = {
+                questions: QUIZ_DATA.lvl1,
+                isLevel2: false,
+                index: 0,
+                score: 0,
+                streak: 0,
+                log: [],
+                timeLeft: QUESTION_TIME,
+                timerId: null,
+                isAnswering: false
+            };
+
+            dom.startBtn.addEventListener('click', () => { SoundFX.init(); startQuiz(false); });
+            dom.restartBtn.addEventListener('click', () => startQuiz(false));
+            dom.nextLevelBtn.addEventListener('click', () => startQuiz(true));
+
+            // Делегування кліків по відповідях (1 слухач замість 48)
+            dom.answersContainer.addEventListener('click', (e) => {
+                const btn = e.target.closest('.answer-btn');
+                if (!btn || state.isAnswering) return;
+                selectAnswer(Number(btn.dataset.index));
+            });
+
+            function startQuiz(startLvl2 = false) {
+                clearInterval(state.timerId);
+                state = {
+                    questions: startLvl2 ? QUIZ_DATA.lvl2 : QUIZ_DATA.lvl1,
+                    isLevel2: startLvl2,
+                    index: 0,
+                    score: 0,
+                    streak: 0,
+                    log: [],
+                    timeLeft: QUESTION_TIME,
+                    timerId: null,
+                    isAnswering: false
+                };
+
+                dom.startScreen.style.display = 'none';
+                dom.resultScreen.style.display = 'none';
+                dom.nextLevelBtn.style.display = 'none';
+                dom.quizScreen.style.display = 'block';
+
+                showQuestion();
+            }
+
+            function startTimer() {
+                clearInterval(state.timerId);
+                state.timeLeft = QUESTION_TIME;
+                dom.timer.textContent = `⏱ ${state.timeLeft}`;
+                dom.timer.classList.remove('danger');
+
+                // Плавне скидання та запуск прогрес-бару через GPU (scaleX)
+                dom.timerBar.style.transition = 'none';
+                dom.timerBar.style.transform = 'scaleX(1)';
+
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        dom.timerBar.style.transition = `transform ${QUESTION_TIME}s linear`;
+                        dom.timerBar.style.transform = 'scaleX(0)';
+                    });
+                });
+
+                state.timerId = setInterval(() => {
+                    state.timeLeft--;
+                    dom.timer.textContent = `⏱ ${state.timeLeft}`;
+
+                    if (state.timeLeft <= 3 && state.timeLeft > 0) {
+                        dom.timer.classList.add('danger');
+                        SoundFX.play('tick');
+                    }
+
+                    if (state.timeLeft <= 0) {
+                        clearInterval(state.timerId);
+                        if (!state.isAnswering) handleTimeOut();
+                    }
+                }, 1000);
+            }
+
+            function handleTimeOut() {
+                state.isAnswering = true;
+                SoundFX.play('wrong');
+                state.streak = 0;
+                updateStreakUI();
+
+                const currentQ = state.questions[state.index];
+                state.log.push({
+                    question: currentQ.question,
+                    userChoice: "Час вичерпано ⌛",
+                    correctChoice: currentQ.answers[currentQ.correct].text,
+                    isCorrect: false,
+                    explanation: currentQ.explanation
+                });
+
+                const buttons = dom.answersContainer.children;
+                if (buttons[currentQ.correct]) {
+                    buttons[currentQ.correct].classList.add('correct');
+                }
+
+                setTimeout(nextQuestion, 900);
+            }
+
+            function showQuestion() {
+                state.isAnswering = false;
+                const q = state.questions[state.index];
+
+                dom.questionText.textContent = q.question;
+                dom.questionSticker.textContent = q.sticker;
+                dom.questionTracker.textContent = `Запитання ${state.index + 1} / ${state.questions.length}`;
+                dom.scoreTracker.textContent = `Очки: ${state.score}`;
+                updateStreakUI();
+
+                // Швидке складання DOM через DocumentFragment
+                const fragment = document.createDocumentFragment();
+                q.answers.forEach((ans, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'answer-btn';
+                    btn.dataset.index = i;
+                    btn.innerHTML = `
+                        <div class="answer-sticker-thumb">${ans.sticker}</div>
+                        <span class="answer-text-label">${ans.text}</span>
+                    `;
+                    fragment.appendChild(btn);
+                });
+
+                dom.answersContainer.innerHTML = '';
+                dom.answersContainer.appendChild(fragment);
+
+                startTimer();
+            }
+
+            function selectAnswer(selectedIndex) {
+                state.isAnswering = true;
+                clearInterval(state.timerId);
+                
+                // Зупиняємо анімацію смужки на поточному місці
+                const computedTransform = getComputedStyle(dom.timerBar).transform;
+                dom.timerBar.style.transition = 'none';
+                dom.timerBar.style.transform = computedTransform;
+
+                SoundFX.play('click');
+
+                const currentQ = state.questions[state.index];
+                const buttons = dom.answersContainer.children;
+                const isCorrect = selectedIndex === currentQ.correct;
+
+                if (isCorrect) {
+                    SoundFX.play('correct');
+                    buttons[selectedIndex].classList.add('correct');
+                    state.score += 10 + (state.streak * 2);
+                    state.streak++;
+                } else {
+                    SoundFX.play('wrong');
+                    buttons[selectedIndex].classList.add('wrong');
+                    buttons[currentQ.correct].classList.add('correct');
+                    state.streak = 0;
+                }
+
+                updateStreakUI();
+
+                state.log.push({
+                    question: currentQ.question,
+                    userChoice: currentQ.answers[selectedIndex].text,
+                    correctChoice: currentQ.answers[currentQ.correct].text,
+                    isCorrect,
+                    explanation: currentQ.explanation
+                });
+
+                setTimeout(nextQuestion, 900);
+            }
+
+            function updateStreakUI() {
+                if (state.streak > 1) {
+                    dom.streakTracker.style.display = 'inline';
+                    dom.streakTracker.textContent = `🔥 Комбо: x${state.streak}`;
+                } else {
+                    dom.streakTracker.style.display = 'none';
+                }
+            }
+
+            function nextQuestion() {
+                state.index++;
+                if (state.index < state.questions.length) {
+                    showQuestion();
+                } else {
+                    showResults();
+                }
+            }
+
+            function showResults() {
+                dom.quizScreen.style.display = 'none';
+                dom.resultScreen.style.display = 'block';
+
+                const correctCount = state.log.filter(item => item.isCorrect).length;
+                const total = state.questions.length;
+                const grade = Math.round((correctCount / total) * 12);
+
+                dom.finalAnswers.textContent = `Правильних відповідей: ${correctCount} з ${total} • Набрано очок: ${state.score}`;
+                dom.finalGrade.textContent = `Оцінка: ${grade} / 12`;
+
+                if (grade >= 10) {
+                    dom.resultComment.textContent = "Неймовірно! Ти справжній знавець України! 🇺🇦🏆";
+                    dom.resultComment.style.color = "#4ade80";
+                } else if (grade >= 7) {
+                    dom.resultComment.textContent = "Гарний результат! Добре знаєш рідний край 👍";
+                    dom.resultComment.style.color = "#facc15";
+                } else {
+                    dom.resultComment.textContent = "Непогано, але є куди рости! Спробуй ще раз 💪";
+                    dom.resultComment.style.color = "#f87171";
+                }
+
+                dom.nextLevelBtn.style.display = (!state.isLevel2 && correctCount >= 8) ? 'block' : 'none';
+
+                const fragment = document.createDocumentFragment();
+                state.log.forEach((item, idx) => {
+                    const div = document.createElement('div');
+                    div.className = `review-item ${item.isCorrect ? 'correct-item' : ''}`;
+                    div.innerHTML = `
+                        <div class="review-question">${idx + 1}. ${item.question}</div>
+                        <div class="review-answer">
+                            Твоя відповідь: <b>${item.userChoice}</b> ${item.isCorrect ? '✅' : `❌ (Правильно: <b>${item.correctChoice}</b>)`}
+                        </div>
+                        <div class="review-explanation">💡 ${item.explanation}</div>
+                    `;
+                    fragment.appendChild(div);
+                });
+
+                dom.reviewList.innerHTML = '';
+                dom.reviewList.appendChild(fragment);
+            }
+        });
+    </script>
+</body>
+</html>
